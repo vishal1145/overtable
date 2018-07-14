@@ -1,0 +1,602 @@
+<section id="main">
+    <div ng-include="'public/template/partials/sidebar.html'" ng-cloak></div>
+
+
+    <section id="content">
+        <div class="container">
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>{{'SHIFTS' | translate}}</h2>
+                    <!--<button  class="btn palette-Light-Green bg btn-float waves-effect waves-circle waves-float"><i class="zmdi zmdi-plus"></i></button>-->
+
+                </div>
+                
+               
+
+                <div ng-if="shift.length > 0" id="data-table-command-header" class="bootgrid-header container-fluid">
+                    <div class="row">
+                        <div class="col-sm-12 actionBar">
+                            <div class="search form-group">
+                                <div class="input-group">
+                                    <span class="zmdi icon input-group-addon glyphicon-search"></span>
+                                    <input type="text" ng-model="search" class="search-field form-control" placeholder="{{'SEARCH' | translate}}">
+                                </div>
+                            </div>
+                            <div class="actions btn-group">
+                                <div class="dropdown btn-group">
+                                    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"><span class="dropdown-text">{{pageSize}}</span> <span class="caret"></span></button>
+                                    <ul class="dropdown-menu pull-right" role="menu">
+                                        <li ng-class="(pageSize == 10 ? 'active' : '')"><a ng-click="pageSize = 10" class="dropdown-item dropdown-item-button">10</a></li>
+                                        <li ng-class="(pageSize == 25 ? 'active' : '')"><a ng-click="pageSize = 25" class="dropdown-item dropdown-item-button">25</a></li>
+                                        <li ng-class="(pageSize == 50 ? 'active' : '')"><a ng-click="pageSize = 50" class="dropdown-item dropdown-item-button">50</a></li>
+                                        <li ng-class="(pageSize == totalsize ? 'active' : '')"><a ng-click="pageSize = totalsize" class="dropdown-item dropdown-item-button">{{'ALL' | translate}}</a></li>
+                                    </ul>
+                                </div>
+                                <div class="dropdown btn-group">
+                                    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"><span class="dropdown-text"><span class="zmdi icon zmdi-view-module"></span></span> <span class="caret"></span></button>
+                                    <ul class="dropdown-menu pull-right" role="menu">
+                                        <li ng-repeat="head in headers">
+                                            <div class="checkbox">
+                                                <label class="dropdown-item">
+                                                    <input name="id" type="checkbox" ng-model="head.show" ng-click="!head.show" class="dropdown-item-checkbox" checked="checked"> {{head.heading | translate}}<i class="input-helper"></i>
+                                                </label>
+                                            </div>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="data-table-selection" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th ng-repeat="head in headers" ng-click="sort('head')" ng-if="head.show">
+                                    {{head.heading | translate}}
+                                </th>
+                                <th data-column-id="commands" class="text-left" style="">
+                                    <a href="javascript:void(0);" class="column-header-anchor ">
+                                        <span class="text">{{'ACTION' | translate}}</span><span class="zmdi icon "></span>
+                                    </a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+
+
+                            <tr dir-paginate="shift in shifts|filter:search|itemsPerPage:pageSize" current-page="currentPage">
+                                <td>{{$index+1}}</td>
+                                <td ng-if="headers[0].show">{{shift.created_by}}</td>
+                                <td ng-if="headers[1].show">{{shift.starttime|date:'shortTime'}}</td>
+                                <td ng-if="headers[2].show">{{shift.endtime|date:'shortTime'}}</td>
+                                <td ng-if="headers[3].show">{{shift.invoices.length}}</td>
+                                <td ng-if="headers[4].show">{{shift.orders.length}}</td>
+
+                                <td class="text-left" style="">
+                                    <button class="btn btn-primary" ng-click="openReport(shift)"><i class="zmdi zmdi-eye"></i></button>
+
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                    <div id="data-table-command-footer" class="bootgrid-footer container-fluid">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <dir-pagination-controls max-size="5" direction-links="true" boundary-links="true" on-page-change="pageChangeHandler(newPageNumber)">
+                                </dir-pagination-controls>
+                            </div>
+                            <div class="col-sm-6 infoBar">
+                                <div class="infos">{{'SHOWING' | translate}} {{((currentPage - 1) *pageSize) +1;}}   to   <spam ng-show="currentPage *pageSize<=shift.length">{{currentPage *pageSize}}</spam> <spam ng-show="currentPage *pageSize>shift.length">{{shift.length}}</spam>   of  {{shift.length}} {{'ENTRIES' | translate}}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+				<div class="text-center" ng-hide="$scope.shiftLoaded">
+	                		<div class="preloader pl-xxl">
+                                <svg class="pl-circular" viewBox="25 25 50 50">
+                                    <circle class="plc-path" cx="50" cy="50" r="20"></circle>
+                                </svg>
+                            </div>
+               </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="footer" ng-include="'public/template/partials/footer.html'" ng-cloak></footer>
+
+</section>
+
+<style>
+    .RowColor  {
+        color:red;
+    }
+</style>
+
+
+<div class="modal fade" id="reportModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">{{'SHIFTREPORT' | translate}}</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6"><h5>{{currentShift.starttime|date:'mediumDate'}}</h5></div>
+                    <div class="col-md-6 text-right"></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">{{currentShift.starttime|date:'shortTime'}} - {{currentShift.endtime|date:'shortTime'}}</div>
+                    <div class="col-md-6"></div>
+                </div>
+
+                <div class="invoice-display">
+                    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+
+                        <div class="panel panel-default" ng-repeat="sh in currentShift.invoices track by $index">
+                            <div class="panel-heading" role="tab" id="headingOne">
+                                <h4 class="panel-title">
+                                    <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne{{$index}}" aria-expanded="true" aria-controls="collapseOne{{$index}}">
+                                        <i ng-if="sh.ispanding"class="zmdi zmdi-info-outline"></i>   {{'INVOICE' | translate}}: {{sh.clientName}} | {{'INVOICE' | translate}} #{{sh.invoiceNumber}} <span ng-show="sh.override.isPriceOverride"> | {{'CANCELED' | translate}} </span> <span ng-show="sh.discount"> | {{'DISCOUNT' | translate}}  </span> | total: {{sh.prices.grandtotal}} |<span ng-show="sh.iscash">{{'CASH' | translate}}</span>
+                                            <span ng-hide="sh.iscash">{{'CARD' | translate}}</span>
+                                    </a>
+                                </h4>
+                            </div>
+                            <div id="collapseOne{{$index}}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                                <div class="panel-body">
+
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <strong style="font-size:14px;">People Count : - </strong>
+                                        </div>
+                                        <div class="col-md-3">
+                                            {{sh.people}}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong style="font-size:14px;">Table Number : - </strong>
+                                        </div>
+                                        <div class="col-md-3">
+                                            {{sh.tables.number}}
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <strong style="font-size:14px;">Invoice Total : - </strong>
+
+                                        </div>
+                                        <div class="col-md-3">
+                                            {{sh.prices.grandtotal}}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong style="font-size:14px;">Cash ? : - </strong>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span ng-show="sh.iscash">yes</span>
+                                            <span ng-hide="sh.iscash">no</span>
+                                        </div>
+                                    </div>
+                                    <div class="row" ng-if="sh.discount && sh.discount.type">
+                                        <div class="col-md-3">
+                                            <strong style="font-size:14px;">Discount : - </strong>
+                                        </div>
+                                        <div class="col-md-3" ng-if="sh.discount.type == 'amount'">
+                                            {{sh.discount.Amount}} 
+                                        </div>
+                                        <div class="col-md-3" ng-if="sh.discount.type == 'percentage'">
+                                            {{sh.discount.Amount}} % 
+                                        </div>
+                                    </div>
+                                    <br />
+                                    <div class="row">
+                                        <div class="col-md-12" ng-show="sh.orders && sh.orders.length>0">
+                                            <strong style="font-size:16px; color:#009688;">Orders List</strong><br />
+                                        </div>
+
+                                        <div class="col-md-12" ng-show="sh.orders && sh.orders.length == 0">
+                                            <strong style="font-size:16px; color:#009688;">This invoice has no order</strong><br />
+                                        </div>
+
+                                    </div>
+
+                                    <div ng-repeat="order in sh.orders" class="row">
+
+                                        <div class="col-md-3">
+                                            <strong>Product Name : - </strong>
+
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span>{{order.product.Name}}</span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Quantity : - </strong>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span>{{order.quantity}}</span>
+                                        </div>
+
+
+
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel panel-default" ng-show="showShft.invoices.length==0">
+                            <div class="panel-heading" role="tab" id="headingOne">
+                                <h4 class="panel-title">
+                                    <a role="button">
+                                        No Invoice Found..
+                                    </a>
+                                </h4>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <div id="c-grid" class="clearfix" data-columns="3">
+                    <div class="column size-1of3">
+                        <div class="card c-dark palette-Light-Blue-400
+ bg">
+                            <div class="card-header p-b-0">
+                                <h2>{{'SHIFTRESULTS' | translate}} </h2>
+                            </div>
+                            <div class="card-body">
+
+
+                                <div class="list-group lg-alt lg-even-white">
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-1"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>Costos Inventario</small>
+                                            <h3>{{currentShift.totalCost.toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+									
+									
+                               <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-1"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>Reported Costs</small>
+                                            <h3>{{R_expence.toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+                                    
+                                    
+                                     <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-2"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{'TOTALEMPLOYEES' | translate}} 10%</small>
+                                            <h3>{{((currentShift.totalSales -(currentShift.totalSales  * 13/100)) * 10/100).toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+                          
+                                      <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-2"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{'TAX' | translate}}</small>
+                                            <h3>{{(currentShift.totalSales  * 13/100).toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+                                    
+									<div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-2"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{'TOTALCOSTS' | translate}}</small>
+                                            <h3>{{ ((currentShift.totalSales * 10/100) + ((currentShift.totalSales - (currentShift.totalSales * 10/100)) * 13/100) + currentShift.totalCost + R_expence).toLocaleString('en')}}
+	                                            
+                                            </h3>
+                                        </div>
+                                    </div>
+                              
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-2"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{'SALESTOTAL' | translate}}</small>
+                                            <h3>{{currentShift.totalSales.toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-3"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>Resultado</small>
+                                            <h3>{{(currentShift.totalSales - (((currentShift.totalSales * 13/100) + ((currentShift.totalSales - (currentShift.totalSales * 13/100)) * 10/100) + currentShift.totalCost + R_expence))).toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div> 
+                                </div>
+
+                                <div class="p-5"></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header ch-alt p-b-0">
+                                <h4>{{'CASHIERHISTORY' | translate}} </h4>
+                            </div>
+
+                            <div class="card-body">
+
+
+                                <ul class="list-group lg-alt">
+                                    <li class="list-group-item media">
+
+                                        <div class="media-body">
+                                            <span class="badge pull-right">{{currentShift.openingBalance.toLocaleString('en')}}</span>
+                                            <div class="lgi-heading">{{'OPENINGSHIFT' | translate}}</div>
+                                            <small class="lgi-text">{{currentShift.openShiftBy}}</small>
+                                        </div>
+
+                                    </li>
+                                    <li class="list-group-item media" ng-repeat="edit in currentShift.edits">
+
+                                        <div class="media-body">
+                                            <span class="badge pull-right" ng-if="edit.opertaiontype=='Add'">+ {{edit.editamount.toLocaleString('en')}}</span>
+                                            <span class="badge pull-right" ng-if="edit.opertaiontype=='Remove'">- {{edit.editamount.toLocaleString('en')}}</span>
+                                            <div class="lgi-heading">{{edit.observation}}</div>
+                                            <small class="lgi-text">{{edit.editby}}</small>
+                                        </div>
+
+                                    </li>
+                                    <li class="list-group-item media">
+
+                                        <div class="media-body">
+                                            <span class="badge pull-right">{{currentShift.closingBalance.toLocaleString('en')}}</span>
+                                            <div class="lgi-heading">{{'CLOSINGSHIFT' | translate}}</div>
+                                            <small class="lgi-text">{{currentShift.closeShiftBy}}</small>
+                                        </div>
+
+                                    </li>
+                                </ul>
+
+                                <div class="p-5"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="column size-1of3">
+                        <div class="card c-dark palette-Green-400
+ bg">
+                            <div class="card-header p-b-0">
+                                <h2>{{'PAYMENTMETHODS' | translate}} </h2>
+                            </div>
+                            <div class="card-body">
+
+
+                                <div class="list-group lg-alt lg-even-white">
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-1"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>Total {{'CASH' | translate}}</small>
+                                            <h3>{{currentShift.totalCash.toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-2"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>Total {{'CARD' | translate}}</small>
+                                            <h3>{{currentShift.totalCredit.toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-3"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>Total</small>
+                                            <h3>{{(currentShift.totalCash + currentShift.totalCredit).toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-5"></div>
+                            </div>
+                        </div>
+
+                        <div class="card c-dark palette-Blue-Grey-400
+ bg">
+                            <div class="card-header p-b-0">
+                                <h2>{{'TOTALEMPLOYEES' | translate}} 10%</h2>
+
+                            </div>
+                            <div class="card-body">
+
+
+                                <div class="list-group lg-alt lg-even-white">
+                                    <div class="list-group-item media" ng-repeat="employee in currentShift.employeeScore">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-1" ng-if="$index % 2==0"></div>
+                                            <div class="sparkline-bar-1" ng-if="$index % 2==1"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{employee.Employee}}</small>
+                                            <h3>{{employee.Percentage.toLocaleString('en')}}</h3>
+                                        </div>
+                                    </div>
+
+                                    
+
+
+                                </div>
+
+                                <div class="p-5"></div>
+                            </div>
+                        </div>
+ 
+ 						<div class="card">
+                            <div class="card-header ch-alt p-b-0">
+                                <h4>Expenses Report </h4>
+                            </div>
+
+                            <div class="card-body">
+
+
+                                <ul class="list-group lg-alt">
+                                    <li class="list-group-item media">
+
+                                        <div class="media-body">
+                                            <span class="badge pull-right">{{currentShift.openingBalance.toLocaleString('en')}}</span>
+                                            <div class="lgi-heading">To buy for </div>
+                                            <small class="lgi-text">{{currentShift.openShiftBy}}</small>
+                                        </div>
+
+                                    </li>
+                                    <li class="list-group-item media" ng-repeat="edit in currentShift.edits">
+
+                                        <div class="media-body">
+                                            <span class="badge pull-right" ng-if="edit.opertaiontype=='Add'">+ {{edit.editamount.toLocaleString('en')}}</span>
+                                            <span class="badge pull-right" ng-if="edit.opertaiontype=='Remove'">- {{edit.editamount.toLocaleString('en')}}</span>
+                                            <div class="lgi-heading">{{edit.observation}}</div>
+                                            <small class="lgi-text">{{edit.editby}}</small>
+                                        </div>
+
+                                    </li>
+                                    <li class="list-group-item media">
+
+                                        <div class="media-body">
+                                            <span class="badge pull-right">{{currentShift.closingBalance.toLocaleString('en')}}</span>
+                                            <div class="lgi-heading">To pay for dj</div>
+                                            <small class="lgi-text">{{currentShift.closeShiftBy}}</small>
+                                        </div>
+
+                                    </li>
+                                </ul>
+
+                                <div class="p-5"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column size-1of3">
+                        <div class="card c-dark palette-Teal-400
+ bg">
+                            <div class="card-header p-b-0">
+                                <h2>{{'STADISTICS' | translate}}</h2>
+
+                            </div>
+                            <div class="card-body">
+
+
+                                <div class="list-group lg-alt lg-even-white">
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-1"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{'TOTALPEOPLE' | translate}}</small>
+                                            <h3>{{currentShift.totalServed}}</h3>
+                                        </div>
+                                    </div>
+
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-2"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{'AVERAGEPERPERSON' | translate}}</small>
+                                            <h3>{{currentShift.avgPerPerson}}</h3>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                                <div class="p-5"></div>
+                            </div>
+                        </div>
+
+                        <div class="card c-dark palette-Purple-400
+ bg">
+                            <div class="card-header p-b-0">
+                                <h2>{{'Bills' | translate}} & {{'Orders' | translate}}</h2>
+
+                            </div>
+                            <div class="card-body">
+
+
+                                <div class="list-group lg-alt lg-even-white">
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-1"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{'Bills' | translate}}  </small>
+                                            <h3>{{currentShift.invoices.length}}</h3>
+                                        </div>
+                                    </div>
+
+                                    <div class="list-group-item media">
+                                        <div class="pull-right hidden-sm">
+                                            <div class="sparkline-bar-2"></div>
+                                        </div>
+
+                                        <div class="media-body ns-item">
+                                            <small>{{'Orders' | translate}}</small>
+                                            <h3>{{currentShift.orders.length}}</h3>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                                <div class="p-5"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{'CLOSE' | translate}}</button>
+            </div>
+        </div>
+    </div>
+</div>
